@@ -62,40 +62,18 @@
     <div id="accountModal" class="modal-overlay hidden">
         <div class="modal glass">
             <div class="modal-header">
-                <h2 class="modal-title gradient-text">Create Account / Login</h2>
+                <h2 class="modal-title gradient-text">Login</h2>
                 <button id="closeAccount" class="close-btn">×</button>
             </div>
             <div class="modal-body">
-                <div id="authTabs" class="auth-tabs">
-                    <button id="showCreate" class="tab-btn active">Create</button>
-                    <button id="showLogin" class="tab-btn">Login</button>
+                <div class="oauth-group">
+                    <button class="oauth-btn discord" id="discordLoginBtn">
+                        <img src="discord.svg" alt="Discord" class="oauth-icon"> Login with Discord
+                    </button>
+                    <button class="oauth-btn github" id="githubLoginBtn">
+                        <img src="github.svg" alt="GitHub" class="oauth-icon"> Login with GitHub
+                    </button>
                 </div>
-                <form id="createForm" class="auth-form">
-                    <div class="form-group">
-                        <label for="newUsername">Username</label>
-                        <input type="text" id="newUsername" class="input-md" autocomplete="off">
-                    </div>
-                    <div class="form-group">
-                        <label for="newEmail">Email</label>
-                        <input type="email" id="newEmail" class="input-md" autocomplete="off">
-                    </div>
-                    <div class="form-group">
-                        <label for="newPassword">Password</label>
-                        <input type="password" id="newPassword" class="input-md">
-                    </div>
-                    <button id="saveAccount" class="form-btn" type="button">Create</button>
-                </form>
-                <form id="loginForm" class="auth-form hidden">
-                    <div class="form-group">
-                        <label for="loginUsername">Username</label>
-                        <input type="text" id="loginUsername" class="input-md" autocomplete="off">
-                    </div>
-                    <div class="form-group">
-                        <label for="loginPassword">Password</label>
-                        <input type="password" id="loginPassword" class="input-md">
-                    </div>
-                    <button class="form-btn" type="button" id="loginBtn">Login</button>
-                </form>
             </div>
         </div>
     </div>
