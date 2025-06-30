@@ -1,25 +1,25 @@
 const express = require('express')
 const serverless = require('serverless-http')
 const crypto = require('crypto')
+const axios = require('axios')
+const cookieParser = require('cookie-parser')
 const app = express()
 app.use(express.json())
+app.use(cookieParser())
 let scripts = []
 let announcements = []
 let users = []
-function hashPassword(p) {
-    return crypto.createHash('sha256').update(p).digest('hex')
-}
+const DISCORD_CLIENT_ID = "1389056934551752884"
+const DISCORD_CLIENT_SECRET = "8Pns2zmRy6y6YVhD27mkqI1fT3Z2stgr"
+const DISCORD_REDIRECT_URI = "http://localhost:3000/api/oauth/discord/callback"
+const GITHUB_CLIENT_ID = "Ov23liGjZ4VIkhYzKDA5"
+const GITHUB_CLIENT_SECRET = "b6e4184b2cb4fa985ec20e8e0d178ef1be1e8292"
+const GITHUB_REDIRECT_URI = "http://localhost:3000/api/oauth/github/callback"
 function genToken() {
     return crypto.randomBytes(24).toString('hex')
 }
 function getUserByToken(t) {
     return users.find(u => u.token === t)
-}
-function isOwner(u) {
-    return false
-}
-function getUserByEmail(e) {
-    return users.find(u => u.email && u.email.toLowerCase() === e.toLowerCase())
 }
 function getUser(n) {
     return users.find(u => u.username && u.username.toLowerCase() === n.toLowerCase())
@@ -93,36 +93,95 @@ app.put('/api/announcements/:id', (req, res) => {
 app.delete('/api/announcements/:id', (req, res) => {
     res.status(403).json({ error: 'No owner is set to delete announcements.' })
 })
-app.post('/api/users', (req, res) => {
-    const { username, password, email } = req.body
-    if (!username || !password || !email) {
-        return res.status(400).json({ error: 'Username, password, and email are required' })
-    }
-    if (!/^[\w\-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
-        return res.status(400).json({ error: 'Invalid email' })
-    }
-    if (users.some(user => user.username && user.username.toLowerCase() === username.toLowerCase())) {
-        users = users.filter(user => !(user.username && user.username.toLowerCase() === username.toLowerCase()))
-    }
-    if (users.some(user => user.email && user.email.toLowerCase() === email.toLowerCase())) {
-        users = users.filter(user => !(user.email && user.email.toLowerCase() === email.toLowerCase()))
-    }
-    const passHash = hashPassword(password)
-    const token = genToken()
-    const user = { id: Date.now(), username, passHash, token, email }
-    users.push(user)
-    res.status(201).json({ message: 'User created successfully', token })
+app.get('/api/oauth/discord', (req, res) => {
+    const params = [
+        `client_id=${DISCORD_CLIENT_ID}`,
+        `redirect_uri=${encodeURIComponent(DISCORD_REDIRECT_URI)}`,
+        "response_type=code",
+        "scope=identify"
+    ].join('&')
+    res.redirect(`https://discord.com/api/oauth2/authorize?${params}`)
 })
-app.post('/api/login', (req, res) => {
-    const { username, password } = req.body
-    const user = getUser(username)
-    if (!user) return res.status(403).json({ error: 'Invalid credentials' })
-    if (user.passHash === hashPassword(password)) {
-        if (!user.token) user.token = genToken()
-        user.forcePasswordReset = false
-        return res.status(200).json({ message: 'Login successful', token: user.token })
+app.get('/api/oauth/discord/callback', async (req, res) => {
+    const code = req.query.code
+    if (!code) return res.redirect('/')
+    try {
+        const data = new URLSearchParams({
+            client_id: DISCORD_CLIENT_ID,
+            client_secret: DISCORD_CLIENT_SECRET,
+            grant_type: 'authorization_code',
+            code,
+            redirect_uri: DISCORD_REDIRECT_URI,
+            scope: 'identify'
+        })
+        const tokenRes = await axios.post(
+            'https://discord.com/api/oauth2/token',
+            data,
+            { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+        )
+        const accessToken = tokenRes.data.access_token
+        const userRes = await axios.get('https://discord.com/api/users/@me', {
+            headers: { Authorization: `Bearer ${accessToken}` }
+        })
+        const username = userRes.data.username + "#" + userRes.data.discriminator
+        let user = getUser(username)
+        if (!user) {
+            user = { id: Date.now(), username, token: genToken(), discord: userRes.data.id }
+            users.push(user)
+        }
+        res.cookie('sv_user', user.username, { httpOnly: false })
+        res.cookie('sv_token', user.token, { httpOnly: false })
+        res.redirect('/')
+    } catch {
+        res.redirect('/')
+    }
+})
+app.get('/api/oauth/github', (req, res) => {
+    const params = [
+        `client_id=${GITHUB_CLIENT_ID}`,
+        `redirect_uri=${encodeURIComponent(GITHUB_REDIRECT_URI)}`,
+        "scope=read:user user:email"
+    ].join('&')
+    res.redirect(`https://github.com/login/oauth/authorize?${params}`)
+})
+app.get('/api/oauth/github/callback', async (req, res) => {
+    const code = req.query.code
+    if (!code) return res.redirect('/')
+    try {
+        const tokenRes = await axios.post(
+            'https://github.com/login/oauth/access_token',
+            {
+                client_id: GITHUB_CLIENT_ID,
+                client_secret: GITHUB_CLIENT_SECRET,
+                code,
+                redirect_uri: GITHUB_REDIRECT_URI
+            },
+            { headers: { Accept: 'application/json' } }
+        )
+        const accessToken = tokenRes.data.access_token
+        const userRes = await axios.get('https://api.github.com/user', {
+            headers: { Authorization: `token ${accessToken}` }
+        })
+        const username = userRes.data.login
+        let user = getUser(username)
+        if (!user) {
+            user = { id: Date.now(), username, token: genToken(), github: userRes.data.id }
+            users.push(user)
+        }
+        res.cookie('sv_user', user.username, { httpOnly: false })
+        res.cookie('sv_token', user.token, { httpOnly: false })
+        res.redirect('/')
+    } catch {
+        res.redirect('/')
+    }
+})
+app.get('/api/oauth/session', (req, res) => {
+    const user = req.cookies.sv_user
+    const token = req.cookies.sv_token
+    if (user && token) {
+        res.json({ username: user, token: token })
     } else {
-        return res.status(403).json({ error: 'Invalid credentials' })
+        res.status(401).json({ error: 'Not logged in' })
     }
 })
 app.get('/api/ping', (req, res) => {
