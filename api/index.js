@@ -1,20 +1,30 @@
 const express = require('express')
 const serverless = require('serverless-http')
 const crypto = require('crypto')
+const nodemailer = require('nodemailer')
 const app = express()
 app.use(express.json())
 let scripts = []
 let announcements = []
 let users = []
+let resetRequests = []
 const ownerUsername = 'realalex'
+const ownerEmail = process.env.REALALEX_EMAIL || ''
 const ownerPassHash = process.env.REALALEX_PASS_HASH || ''
+const smtpUser = process.env.SMTP_USER || ''
+const smtpPass = process.env.SMTP_PASS || ''
+const smtpHost = process.env.SMTP_HOST || ''
+const smtpPort = Number(process.env.SMTP_PORT) || 465
+const smtpSecure = process.env.SMTP_SECURE === 'false' ? false : true
+const siteUrl = process.env.SITE_URL || 'http://localhost:3000'
+const transporter = nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpSecure,
+    auth: { user: smtpUser, pass: smtpPass }
+})
 function hashPassword(password) {
     return crypto.createHash('sha256').update(password).digest('hex')
-}
-function ensureOwnerUser() {
-    if (!users.some(u => u.username === ownerUsername)) {
-        users.push({ id: Date.now(), username: ownerUsername, passHash: ownerPassHash, token: genToken() })
-    }
 }
 function genToken() {
     return crypto.randomBytes(24).toString('hex')
@@ -24,6 +34,17 @@ function getUserByToken(token) {
 }
 function isOwner(user) {
     return user && user.username && user.username.toLowerCase() === ownerUsername
+}
+function getUserByEmail(email) {
+    return users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase())
+}
+function getUser(username) {
+    return users.find(u => u.username && u.username.toLowerCase() === username.toLowerCase())
+}
+function ensureOwnerUser() {
+    if (!users.some(u => u.username === ownerUsername)) {
+        users.push({ id: Date.now(), username: ownerUsername, passHash: ownerPassHash, token: genToken(), email: ownerEmail })
+    }
 }
 ensureOwnerUser()
 app.get('/api/scripts', (req, res) => {
@@ -126,38 +147,65 @@ app.delete('/api/announcements/:id', (req, res) => {
     res.json({ message: 'Announcement deleted' })
 })
 app.post('/api/users', (req, res) => {
-    const { username, password } = req.body
-    if (!username || !password) {
-        return res.status(400).json({ error: 'Username and password are required' })
+    const { username, password, email } = req.body
+    if (!username || !password || !email) {
+        return res.status(400).json({ error: 'Username, password, and email are required' })
     }
-    if (users.some(user => user.username.toLowerCase() === username.toLowerCase())) {
+    if (!/^[\w\-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
+        return res.status(400).json({ error: 'Invalid email' })
+    }
+    if (users.some(user => user.username && user.username.toLowerCase() === username.toLowerCase())) {
         return res.status(400).json({ error: 'Username already exists' })
+    }
+    if (users.some(user => user.email && user.email.toLowerCase() === email.toLowerCase())) {
+        return res.status(400).json({ error: 'Email already registered' })
     }
     const passHash = hashPassword(password)
     const token = genToken()
-    const user = { id: Date.now(), username, passHash, token }
+    const user = { id: Date.now(), username, passHash, token, email }
     users.push(user)
     res.status(201).json({ message: 'User created successfully', token })
 })
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body
     ensureOwnerUser()
-    if (username === ownerUsername) {
-        const user = users.find(u => u.username === ownerUsername)
-        if (!user) return res.status(403).json({ error: 'Owner account missing' })
-        if (user.passHash === hashPassword(password)) {
-            if (!user.token) user.token = genToken()
-            return res.status(200).json({ message: 'Login successful', token: user.token })
-        } else {
-            return res.status(403).json({ error: 'Invalid credentials' })
-        }
-    }
-    const user = users.find(u => u.username === username)
-    if (!user || user.passHash !== hashPassword(password)) {
+    const user = getUser(username)
+    if (!user) return res.status(403).json({ error: 'Invalid credentials' })
+    if (user.passHash === hashPassword(password)) {
+        if (!user.token) user.token = genToken()
+        return res.status(200).json({ message: 'Login successful', token: user.token })
+    } else {
         return res.status(403).json({ error: 'Invalid credentials' })
     }
-    if (!user.token) user.token = genToken()
-    res.status(200).json({ message: 'Login successful', token: user.token })
+})
+app.post('/api/request-password-reset', async (req, res) => {
+    const { email } = req.body
+    if (!email) return res.status(400).json({ error: 'Email is required' })
+    const user = getUserByEmail(email)
+    if (!user) return res.status(404).json({ error: 'No account with that email' })
+    const resetToken = genToken()
+    const expires = Date.now() + 1000 * 60 * 15
+    resetRequests = resetRequests.filter(r => r.userId !== user.id)
+    resetRequests.push({ userId: user.id, resetToken, expires })
+    const resetLink = `${siteUrl}/forgotarea.html?token=${resetToken}`
+    await transporter.sendMail({
+        from: smtpUser,
+        to: email,
+        subject: 'Password Reset for ScriptVault',
+        html: `Click the link below to reset your password:<br><a href="${resetLink}">${resetLink}</a><br>This link will expire in 15 minutes.`
+    })
+    res.json({ message: 'Password reset email sent' })
+})
+app.post('/api/reset-password', (req, res) => {
+    const { token, password } = req.body
+    if (!token || !password) return res.status(400).json({ error: 'Token and new password required' })
+    const reqObj = resetRequests.find(r => r.resetToken === token)
+    if (!reqObj || Date.now() > reqObj.expires) return res.status(400).json({ error: 'Invalid or expired token' })
+    const user = users.find(u => u.id === reqObj.userId)
+    if (!user) return res.status(404).json({ error: 'User not found' })
+    user.passHash = hashPassword(password)
+    resetRequests = resetRequests.filter(r => r.resetToken !== token)
+    res.json({ message: 'Password successfully reset' })
 })
 module.exports = app
 module.exports.handler = serverless(app)
