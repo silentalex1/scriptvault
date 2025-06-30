@@ -4,34 +4,70 @@
     <meta charset="UTF-8">
     <title>Reset Password - ScriptVault</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #1a1a1a; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .box { background: #222; padding: 2em; border-radius: 8px; box-shadow: 0 0 12px #444; width: 320px; }
-        input[type="password"], button { width: 100%; margin-top: 1em; padding: 0.8em; border-radius: 4px; border: none; }
-        input[type="password"] { background: #111; color: #fff; }
-        button { background: #2563eb; color: #fff; font-weight: bold; cursor: pointer; }
-        .msg { margin-top: 1.2em; }
+        body { font-family: Arial, sans-serif; background: #1a1a1a; color: #fff; margin: 0; }
+        .navbar { background: #23272f; padding: 1em 0; display: flex; justify-content: center; }
+        .navbar button { background: #222; color: #fff; border: none; padding: 0.8em 1.2em; margin: 0 0.4em; border-radius: 4px; font-size: 1em; cursor: pointer; }
+        .navbar button:disabled { background: #3a3a3a; color: #bbb; cursor: not-allowed; }
+        .container { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 70vh; }
+        .reset-box { background: #23272f; margin-top: 3em; padding: 2em 2.5em; border-radius: 10px; width: 100%; max-width: 400px; box-shadow: 0 0 16px #111; }
+        .reset-box h2 { margin-bottom: 0.6em; }
+        .user-area { font-size: 1.15em; margin-bottom: 1.4em; }
+        .input-area { margin-bottom: 1.2em; }
+        .input-area input[type="password"] { width: 100%; padding: 0.9em; border-radius: 4px; border: none; background: #15191f; color: #fff; margin-bottom: 0.8em; }
+        .reset-btn { width: 100%; background: #2563eb; color: #fff; border: none; border-radius: 4px; padding: 1em; font-size: 1.1em; font-weight: bold; cursor: pointer; }
+        .msg { margin-top: 1em; min-height: 1.5em; }
     </style>
 </head>
 <body>
-<div class="box">
-    <h2>Reset Your Password</h2>
-    <input type="password" id="password" placeholder="New password">
-    <button id="resetBtn">Reset Password</button>
-    <div class="msg" id="msg"></div>
+<div class="navbar">
+    <button id="homeBtn" disabled>Home</button>
+    <button id="announcementsBtn" disabled>Announcements</button>
+    <button id="settingsBtn" disabled>Settings</button>
+</div>
+<div class="container">
+    <div class="reset-box">
+        <h2>Reset Your Password</h2>
+        <div class="user-area" id="userArea">Loading...</div>
+        <div class="input-area">
+            <input type="password" id="password" placeholder="Enter new password">
+        </div>
+        <button class="reset-btn" id="resetBtn">Reset Password</button>
+        <div class="msg" id="msg"></div>
+    </div>
 </div>
 <script>
+let username = ""
 const token = new URLSearchParams(window.location.search).get('token')
-const btn = document.getElementById('resetBtn')
+const userArea = document.getElementById('userArea')
 const msg = document.getElementById('msg')
-btn.onclick = async () => {
-    const password = document.getElementById('password').value
+const resetBtn = document.getElementById('resetBtn')
+const navBtns = [document.getElementById('homeBtn'), document.getElementById('announcementsBtn'), document.getElementById('settingsBtn')]
+let resetDone = false
+async function fetchUsername() {
+    try {
+        const r = await fetch('/api/get-username-from-token?token=' + encodeURIComponent(token))
+        const data = await r.json()
+        if (data.username) {
+            username = data.username
+            userArea.innerHTML = `<b>${username}</b>, reset your password ${username}, to continue on the website.`
+        } else {
+            userArea.innerHTML = "Invalid or expired reset link."
+            resetBtn.disabled = true
+        }
+    } catch {
+        userArea.innerHTML = "Error loading user."
+        resetBtn.disabled = true
+    }
+}
+fetchUsername()
+resetBtn.onclick = async () => {
     msg.innerText = ''
-    btn.disabled = true
+    const password = document.getElementById('password').value
     if (!password) {
         msg.innerText = 'Enter a new password.'
-        btn.disabled = false
         return
     }
+    resetBtn.disabled = true
     try {
         const r = await fetch('/api/reset-password', {
             method: 'POST',
@@ -40,15 +76,30 @@ btn.onclick = async () => {
         })
         const data = await r.json()
         if (r.ok) {
-            msg.innerText = 'Password was reset. You can now log in.'
+            msg.innerText = 'Password was reset. You can now use the navigation buttons.'
+            resetDone = true
+            navBtns.forEach(btn => btn.disabled = false)
         } else {
             msg.innerText = data.error || 'Failed to reset password.'
         }
-    } catch (e) {
+    } catch {
         msg.innerText = 'Server error.'
     }
-    btn.disabled = false
+    if (!resetDone) resetBtn.disabled = false
 }
+navBtns.forEach(btn => {
+    btn.onclick = () => {
+        if (!resetDone) {
+            if (window.confirm('You must reset your password first')) {
+                document.getElementById('password').focus()
+            }
+            return
+        }
+        if (btn.id === 'homeBtn') location.href = 'index.html'
+        if (btn.id === 'announcementsBtn') location.href = 'announcements.html'
+        if (btn.id === 'settingsBtn') location.href = 'settings.html'
+    }
+})
 </script>
 </body>
 </html>
