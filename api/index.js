@@ -16,7 +16,7 @@ function getUserByToken(t) {
     return users.find(u => u.token === t)
 }
 function isOwner(u) {
-    return u && u.username && u.username.toLowerCase() === "realalex"
+    return false
 }
 function getUserByEmail(e) {
     return users.find(u => u.email && u.email.toLowerCase() === e.toLowerCase())
@@ -85,43 +85,13 @@ app.get('/api/announcements', (req, res) => {
     res.json(announcements)
 })
 app.post('/api/announcements', (req, res) => {
-    const { title, description } = req.body
-    const token = req.headers['x-auth']
-    const user = getUserByToken(token)
-    if (!isOwner(user)) {
-        return res.status(403).json({ error: 'Only the owner can post announcements.' })
-    }
-    if (!title || !description) {
-        return res.status(400).json({ error: 'Title and description are required' })
-    }
-    announcements.push({ id: Date.now(), title, description })
-    res.status(201).json({ message: 'Announcement saved successfully' })
+    res.status(403).json({ error: 'No owner is set to post announcements.' })
 })
 app.put('/api/announcements/:id', (req, res) => {
-    const { id } = req.params
-    const { title, description } = req.body
-    const token = req.headers['x-auth']
-    const user = getUserByToken(token)
-    if (!isOwner(user)) {
-        return res.status(403).json({ error: 'Only the owner can edit announcements.' })
-    }
-    const a = announcements.find(a => String(a.id) === String(id))
-    if (!a) return res.status(404).json({ error: 'Announcement not found' })
-    if (title) a.title = title
-    if (description) a.description = description
-    res.json({ message: 'Announcement updated' })
+    res.status(403).json({ error: 'No owner is set to edit announcements.' })
 })
 app.delete('/api/announcements/:id', (req, res) => {
-    const { id } = req.params
-    const token = req.headers['x-auth']
-    const user = getUserByToken(token)
-    if (!isOwner(user)) {
-        return res.status(403).json({ error: 'Only the owner can delete announcements.' })
-    }
-    const idx = announcements.findIndex(a => String(a.id) === String(id))
-    if (idx === -1) return res.status(404).json({ error: 'Announcement not found' })
-    announcements.splice(idx, 1)
-    res.json({ message: 'Announcement deleted' })
+    res.status(403).json({ error: 'No owner is set to delete announcements.' })
 })
 app.post('/api/users', (req, res) => {
     const { username, password, email } = req.body
