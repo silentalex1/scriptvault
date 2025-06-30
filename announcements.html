@@ -11,11 +11,13 @@
     <script src="script.js" defer></script>
 </head>
 <body>
+    <div class="noise-bg"></div>
+    <div class="squares-bg"></div>
     <nav class="navbar">
         <div class="nav-inner">
             <div class="nav-links">
                 <a href="index.html" class="nav-link">Home</a>
-                <a href="announcements.html" class="nav-link active" id="announcementsBtn">Announcements</a>
+                <a href="announcements.html" class="nav-link active">Announcements</a>
                 <a href="#" class="nav-link" id="settingsBtn">Settings</a>
             </div>
             <div class="nav-account-group">
@@ -26,17 +28,72 @@
     </nav>
     <main class="main-content">
         <section class="announcements-section">
-            <h1 class="hero-title gradient-text">Announcements</h1>
+            <h1 class="announcements-title gradient-text">Announcements</h1>
             <div class="announcements-list" id="announcementsList"></div>
-            <div id="addAnnouncementSection" style="display:none;">
-                <h2 style="color:#fff;margin-top:2em;">Add Announcement</h2>
-                <form id="addAnnouncementForm">
-                    <input type="text" id="announcementTitle" class="input-lg" placeholder="Title" autocomplete="off">
-                    <textarea id="announcementDescription" class="textarea-lg" placeholder="Description"></textarea>
-                    <button type="submit" class="form-btn">Add Announcement</button>
-                </form>
+            <div id="newAnnouncementArea" class="hidden">
+                <input type="text" id="newAnnouncementTitle" class="input-lg" placeholder="Announcement Title">
+                <textarea id="newAnnouncementDesc" class="textarea-lg" placeholder="Announcement Description"></textarea>
+                <button id="addAnnouncementBtn" class="form-btn">Add Announcement</button>
             </div>
         </section>
     </main>
+    <div id="settingsModal" class="modal-overlay hidden">
+        <div class="modal glass">
+            <div class="modal-header">
+                <h2 class="modal-title gradient-text">Settings</h2>
+                <button id="closeSettings" class="close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Theme</label>
+                    <select id="theme" class="input-md">
+                        <option value="dark">Dark</option>
+                        <option value="light">Light</option>
+                    </select>
+                </div>
+                <button id="saveSettings" class="form-btn">Save</button>
+            </div>
+        </div>
+    </div>
+    <div id="accountModal" class="modal-overlay hidden">
+        <div class="modal glass">
+            <div class="modal-header">
+                <h2 class="modal-title gradient-text">Create Account / Login</h2>
+                <button id="closeAccount" class="close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="authTabs" class="auth-tabs">
+                    <button id="showCreate" class="tab-btn active">Create</button>
+                    <button id="showLogin" class="tab-btn">Login</button>
+                </div>
+                <form id="createForm" class="auth-form">
+                    <div class="form-group">
+                        <label for="newUsername">Username</label>
+                        <input type="text" id="newUsername" class="input-md" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">Password</label>
+                        <input type="password" id="newPassword" class="input-md">
+                    </div>
+                    <div class="form-group">
+                        <label for="newEmail">Email</label>
+                        <input type="email" id="newEmail" class="input-md">
+                    </div>
+                    <button id="saveAccount" class="form-btn" type="button">Create</button>
+                </form>
+                <form id="loginForm" class="auth-form hidden">
+                    <div class="form-group">
+                        <label for="loginUsername">Username</label>
+                        <input type="text" id="loginUsername" class="input-md" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" class="input-md">
+                    </div>
+                    <button class="form-btn" type="button" id="loginBtn">Login</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
