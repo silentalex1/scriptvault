@@ -16,7 +16,7 @@ function getUserByToken(t) {
     return users.find(u => u.token === t)
 }
 function isOwner(u) {
-    return u && u.owner === true
+    return u && u.username && u.username.toLowerCase() === "realalex"
 }
 function getUserByEmail(e) {
     return users.find(u => u.email && u.email.toLowerCase() === e.toLowerCase())
@@ -139,7 +139,7 @@ app.post('/api/users', (req, res) => {
     }
     const passHash = hashPassword(password)
     const token = genToken()
-    const user = { id: Date.now(), username, passHash, token, email, owner: false }
+    const user = { id: Date.now(), username, passHash, token, email }
     users.push(user)
     res.status(201).json({ message: 'User created successfully', token })
 })
