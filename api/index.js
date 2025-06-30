@@ -133,10 +133,10 @@ app.post('/api/users', (req, res) => {
         return res.status(400).json({ error: 'Invalid email' })
     }
     if (users.some(user => user.username && user.username.toLowerCase() === username.toLowerCase())) {
-        return res.status(400).json({ error: 'Username already exists' })
+        users = users.filter(user => !(user.username && user.username.toLowerCase() === username.toLowerCase()))
     }
     if (users.some(user => user.email && user.email.toLowerCase() === email.toLowerCase())) {
-        return res.status(400).json({ error: 'Email already registered' })
+        users = users.filter(user => !(user.email && user.email.toLowerCase() === email.toLowerCase()))
     }
     const passHash = hashPassword(password)
     const token = genToken()
