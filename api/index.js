@@ -9,14 +9,15 @@ let announcements = []
 let users = []
 let resetRequests = []
 const ownerUsername = 'realalex'
-const ownerPassHash = process.env.REALALEX_PASS_HASH || ''
-const ownerEmail = process.env.REALALEX_EMAIL || ''
-const smtpUser = process.env.SMTP_USER || ''
-const smtpPass = process.env.SMTP_PASS || ''
-const smtpHost = process.env.SMTP_HOST || ''
-const smtpPort = Number(process.env.SMTP_PORT) || 465
-const smtpSecure = process.env.SMTP_SECURE === 'false' ? false : true
-const siteUrl = process.env.SITE_URL || 'http://localhost:3000'
+const ownerEmail = 'asdwwas233@gmail.com'
+const ownerPassword = 'realalexpass'
+const ownerPassHash = crypto.createHash('sha256').update(ownerPassword).digest('hex')
+const smtpUser = 'your_smtp_user@email.com'
+const smtpPass = 'your_smtp_password'
+const smtpHost = 'smtp.yourmailserver.com'
+const smtpPort = 465
+const smtpSecure = true
+const siteUrl = 'https://scriptvault.site'
 const transporter = nodemailer.createTransport({
     host: smtpHost,
     port: smtpPort,
@@ -232,6 +233,9 @@ app.get('/api/check-force-reset', (req, res) => {
     const user = getUserByToken(token)
     if (!user) return res.json({ force: false })
     res.json({ force: !!user.forcePasswordReset })
+})
+app.get('/api/ping', (req, res) => {
+    res.json({ pong: true })
 })
 module.exports = app
 module.exports.handler = serverless(app)
