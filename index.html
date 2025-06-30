@@ -130,9 +130,18 @@
                     })
                     const data = await r.json()
                     if (r.ok) {
-                        forgotMsg.innerText = "Reset email sent. Check your inbox."
+                        forgotMsg.innerText = "Password reset requested. Click the link below to reset your password."
+                        if (data.link) {
+                            const a = document.createElement('a')
+                            a.href = data.link
+                            a.innerText = "Reset Password Link"
+                            a.style.display = "block"
+                            a.style.color = "#bc48ff"
+                            a.style.marginTop = "0.6em"
+                            forgotMsg.appendChild(a)
+                        }
                     } else {
-                        forgotMsg.innerText = data.error || "Failed to send reset email."
+                        forgotMsg.innerText = data.error || "Failed to process reset."
                     }
                 } catch { forgotMsg.innerText = "Server error." }
                 forgotSend.disabled = false
