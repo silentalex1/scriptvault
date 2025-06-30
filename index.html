@@ -29,13 +29,14 @@
     <main class="main-content">
         <section class="hero">
             <h1 class="hero-title gradient-text">A private, secure place for your precious scripts.</h1>
-            <div class="subtitle">Store and manage your scripts with ease. Fast. Secure. Always available.</div>
+            <div class="subtitle">Store, edit, and manage your scripts with ease. Fast. Secure. Always available.</div>
         </section>
         <section class="vault-container">
             <form class="vault-form" id="scriptForm">
                 <input type="text" class="input-lg" id="scriptTitle" placeholder="Script Title" autocomplete="off">
                 <textarea class="textarea-lg" id="scriptContent" placeholder="Paste your script here"></textarea>
-                <button class="form-btn" type="submit">Add Script</button>
+                <button class="form-btn" type="submit" id="scriptSubmitBtn">Add Script</button>
+                <button class="form-btn secondary hidden" type="button" id="scriptCancelEditBtn">Cancel Edit</button>
             </form>
             <div class="vault-list" id="scriptList"></div>
         </section>
@@ -73,6 +74,10 @@
                     <div class="form-group">
                         <label for="newUsername">Username</label>
                         <input type="text" id="newUsername" class="input-md" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="newEmail">Email</label>
+                        <input type="email" id="newEmail" class="input-md" autocomplete="off">
                     </div>
                     <div class="form-group">
                         <label for="newPassword">Password</label>
