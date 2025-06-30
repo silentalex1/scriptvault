@@ -13,25 +13,22 @@
 <body>
     <div class="noise-bg"></div>
     <div class="squares-bg"></div>
-    <nav class="navbar">
-        <div class="nav-inner">
-            <div class="nav-links">
-                <a href="index.html" class="nav-link active">Home</a>
-                <a href="announcements.html" class="nav-link" id="announcementsBtn">Announcements</a>
-                <a href="#" class="nav-link" id="settingsBtn">Settings</a>
+    <nav class="navbar float-navbar">
+        <div class="nav-inner-float">
+            <div class="nav-links-float">
+                <a href="index.html" class="nav-link-float active">Home</a>
+                <a href="announcements.html" class="nav-link-float" id="announcementsBtn">Announcements</a>
+                <a href="#" class="nav-link-float" id="settingsBtn">Settings</a>
             </div>
-            <div class="nav-account-group">
-                <span id="welcomeUser" class="welcome-user"></span>
-                <button class="cta-btn" id="accountBtn">Account</button>
-            </div>
+            <button class="cta-btn-float" id="accountBtn">Account</button>
         </div>
     </nav>
-    <main class="main-content">
+    <main class="main-content main-content-centered">
         <section class="hero">
             <h1 class="hero-title gradient-text">A private, secure place for your precious scripts.</h1>
             <div class="subtitle">Store and manage your scripts with ease. Fast. Secure. Always available.</div>
         </section>
-        <section class="vault-container">
+        <section class="vault-container vault-float">
             <form class="vault-form" id="scriptForm">
                 <input type="text" class="input-lg" id="scriptTitle" placeholder="Script Title" autocomplete="off">
                 <textarea class="textarea-lg" id="scriptContent" placeholder="Paste your script here"></textarea>
