@@ -6,7 +6,6 @@ app.use(express.json())
 let scripts = []
 let announcements = []
 let users = []
-let resetRequests = []
 function hashPassword(p) {
     return crypto.createHash('sha256').update(p).digest('hex')
 }
@@ -155,44 +154,6 @@ app.post('/api/login', (req, res) => {
     } else {
         return res.status(403).json({ error: 'Invalid credentials' })
     }
-})
-app.post('/api/request-password-reset', (req, res) => {
-    const { email } = req.body
-    if (!email) return res.status(400).json({ error: 'Email is required' })
-    const user = getUserByEmail(email)
-    if (!user) return res.status(404).json({ error: 'No account with that email' })
-    const resetToken = genToken()
-    const expires = Date.now() + 1000 * 60 * 15
-    resetRequests = resetRequests.filter(r => r.userId !== user.id)
-    resetRequests.push({ userId: user.id, resetToken, expires })
-    user.forcePasswordReset = true
-    res.json({ message: 'Password reset requested', link: `/forgotarea.html?token=${resetToken}` })
-})
-app.post('/api/reset-password', (req, res) => {
-    const { token, password } = req.body
-    if (!token || !password) return res.status(400).json({ error: 'Token and new password required' })
-    const reqObj = resetRequests.find(r => r.resetToken === token)
-    if (!reqObj || Date.now() > reqObj.expires) return res.status(400).json({ error: 'Invalid or expired token' })
-    const user = users.find(u => u.id === reqObj.userId)
-    if (!user) return res.status(404).json({ error: 'User not found' })
-    user.passHash = hashPassword(password)
-    user.forcePasswordReset = false
-    resetRequests = resetRequests.filter(r => r.resetToken !== token)
-    res.json({ message: 'Password successfully reset', username: user.username })
-})
-app.get('/api/get-username-from-token', (req, res) => {
-    const { token } = req.query
-    const reqObj = resetRequests.find(r => r.resetToken === token)
-    if (!reqObj) return res.status(404).json({ error: 'Token not found' })
-    const user = users.find(u => u.id === reqObj.userId)
-    if (!user) return res.status(404).json({ error: 'User not found' })
-    res.json({ username: user.username })
-})
-app.get('/api/check-force-reset', (req, res) => {
-    const token = req.headers['x-auth']
-    const user = getUserByToken(token)
-    if (!user) return res.json({ force: false })
-    res.json({ force: !!user.forcePasswordReset })
 })
 app.get('/api/ping', (req, res) => {
     res.json({ pong: true })
