@@ -51,6 +51,11 @@ body {
     align-items: center;
     gap: 2.1em;
 }
+.nav-account-float {
+    display: flex;
+    align-items: center;
+    margin-left: 2.5em;
+}
 .nav-link-float {
     font-family: 'Inter', monospace;
     font-weight: 800;
@@ -65,6 +70,7 @@ body {
     outline: none;
     position: relative;
     letter-spacing: 0.02em;
+    display: inline-block;
 }
 .nav-link-float.active, .nav-link-float:focus {
     background: linear-gradient(90deg,#bc48ff 0,#3befff 100%);
