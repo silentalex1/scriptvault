@@ -2,39 +2,38 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Announcements - ScriptVault</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
+    <title>Announcements - ScriptVault</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
     <script src="script.js" defer></script>
 </head>
 <body>
     <div class="noise-bg"></div>
     <div class="squares-bg"></div>
-    <nav class="navbar float-navbar">
-        <div class="nav-inner-float">
-            <div class="nav-links-float">
-                <a href="index.html" class="nav-link-float">Home</a>
-                <a href="announcements.html" class="nav-link-float active">Announcements</a>
-                <a href="#" class="nav-link-float" id="settingsBtn">Settings</a>
+    <nav class="navbar glass">
+        <div class="nav-inner">
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="announcements.html" class="nav-link active">Announcements</a>
+                <a href="#" id="settingsBtn" class="nav-link">Settings</a>
             </div>
-            <div class="nav-account-float">
-                <button class="cta-btn-float" id="accountBtn">Account</button>
+            <div class="nav-account-group">
+                <span id="welcomeUser" class="welcome-user"></span>
+                <button id="addAnnouncementBtn" class="cta-btn hidden">＋</button>
+                <button id="createAccountBtn" class="cta-btn">Account</button>
             </div>
         </div>
     </nav>
-    <main class="main-content main-content-centered">
-        <section class="announcements-section">
-            <h1 class="announcements-title gradient-text">Announcements</h1>
-            <div class="announcements-list" id="announcementsList"></div>
-            <div id="newAnnouncementArea" class="hidden">
-                <input type="text" id="newAnnouncementTitle" class="input-lg" placeholder="Announcement Title">
-                <textarea id="newAnnouncementDesc" class="textarea-lg" placeholder="Announcement Description"></textarea>
-                <button id="addAnnouncementBtn" class="form-btn">Add Announcement</button>
-            </div>
+    <main class="main-content">
+        <section class="hero hero-small">
+            <h1 class="hero-title">
+                <span class="gradient-text">Announcements</span>
+            </h1>
         </section>
+        <section class="announce-list" id="announceList"></section>
     </main>
     <div id="settingsModal" class="modal-overlay hidden">
         <div class="modal glass">
@@ -71,12 +70,12 @@
                         <input type="text" id="newUsername" class="input-md" autocomplete="off">
                     </div>
                     <div class="form-group">
-                        <label for="newPassword">Password</label>
-                        <input type="password" id="newPassword" class="input-md">
+                        <label for="newEmail">Email</label>
+                        <input type="email" id="newEmail" class="input-md" autocomplete="off">
                     </div>
                     <div class="form-group">
-                        <label for="newEmail">Email</label>
-                        <input type="email" id="newEmail" class="input-md">
+                        <label for="newPassword">Password</label>
+                        <input type="password" id="newPassword" class="input-md">
                     </div>
                     <button id="saveAccount" class="form-btn" type="button">Create</button>
                 </form>
@@ -91,6 +90,25 @@
                     </div>
                     <button class="form-btn" type="button" id="loginBtn">Login</button>
                 </form>
+            </div>
+        </div>
+    </div>
+    <div id="addAnnouncementModal" class="modal-overlay hidden">
+        <div class="modal glass">
+            <div class="modal-header">
+                <h2 class="modal-title gradient-text">Post Announcement</h2>
+                <button id="closeAddAnnouncement" class="close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="announcementTitle">News title</label>
+                    <input type="text" id="announcementTitle" class="input-md" maxlength="60">
+                </div>
+                <div class="form-group">
+                    <label for="announcementDesc">Announcement description</label>
+                    <textarea id="announcementDesc" class="textarea-lg" maxlength="600"></textarea>
+                </div>
+                <button id="postAnnouncementBtn" class="form-btn">Post announcement</button>
             </div>
         </div>
     </div>
