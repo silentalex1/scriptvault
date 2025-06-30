@@ -4,102 +4,192 @@
     <meta charset="UTF-8">
     <title>Reset Password - ScriptVault</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #1a1a1a; color: #fff; margin: 0; }
-        .navbar { background: #23272f; padding: 1em 0; display: flex; justify-content: center; }
-        .navbar button { background: #222; color: #fff; border: none; padding: 0.8em 1.2em; margin: 0 0.4em; border-radius: 4px; font-size: 1em; cursor: pointer; }
-        .navbar button:disabled { background: #3a3a3a; color: #bbb; cursor: not-allowed; }
-        .container { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 70vh; }
-        .reset-box { background: #23272f; margin-top: 3em; padding: 2em 2.5em; border-radius: 10px; width: 100%; max-width: 400px; box-shadow: 0 0 16px #111; }
-        .reset-box h2 { margin-bottom: 0.6em; }
-        .user-area { font-size: 1.15em; margin-bottom: 1.4em; }
-        .input-area { margin-bottom: 1.2em; }
-        .input-area input[type="password"] { width: 100%; padding: 0.9em; border-radius: 4px; border: none; background: #15191f; color: #fff; margin-bottom: 0.8em; }
-        .reset-btn { width: 100%; background: #2563eb; color: #fff; border: none; border-radius: 4px; padding: 1em; font-size: 1.1em; font-weight: bold; cursor: pointer; }
-        .msg { margin-top: 1em; min-height: 1.5em; }
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;400&display=swap');
+        body {
+            font-family: 'Montserrat', Arial, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            background: radial-gradient(ellipse at top left, #26244b 60%, #18182a 100%);
+            color: #fff;
+        }
+        .navbar {
+            width: 100%;
+            background: #232838;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2em 0 1.5em 0;
+        }
+        .navbar-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-weight: 700;
+            font-size: 1.1em;
+            margin: 0 1.2em;
+            padding: 0.7em 2.3em;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.18s, color 0.16s;
+            position: relative;
+        }
+        .navbar-btn.active, .navbar-btn:focus {
+            background: linear-gradient(90deg,#bc48ff 0,#3befff 100%);
+            color: #18182a;
+        }
+        .navbar-btn:disabled {
+            background: #22263a;
+            color: #aaa;
+            cursor: not-allowed;
+        }
+        .reset-card {
+            background: rgba(35,40,56,0.98);
+            border-radius: 22px;
+            margin: 4em auto 0 auto;
+            padding: 2.6em 2.7em 2em 2.7em;
+            max-width: 410px;
+            box-shadow: 0 0 32px #191b30;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .reset-title {
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(90deg,#bc48ff 0,#3befff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.8em;
+        }
+        .reset-user {
+            margin-bottom: 1.2em;
+            font-size: 1.15em;
+            color: #fff;
+            text-align: center;
+        }
+        .reset-input {
+            width: 100%;
+            background: #16182a;
+            color: #fff;
+            border: 2px solid #393b5b;
+            border-radius: 8px;
+            padding: 1em 1em;
+            font-size: 1.09em;
+            margin-bottom: 1.1em;
+            outline: none;
+            transition: border 0.17s;
+        }
+        .reset-input:focus {
+            border: 2px solid #bc48ff;
+        }
+        .reset-btn {
+            width: 100%;
+            padding: 1.1em 0;
+            font-size: 1.13em;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(90deg,#3b5bff 0,#bc48ff 100%);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            transition: filter 0.14s;
+        }
+        .reset-btn:disabled {
+            background: #232848;
+            color: #aaa;
+            cursor: not-allowed;
+        }
+        .msg {
+            margin-top: 1.2em;
+            min-height: 1.6em;
+            font-size: 1.01em;
+            text-align: center;
+        }
+        @media (max-width: 600px) {
+            .reset-card { padding: 1.3em 0.6em 1.3em 0.6em; }
+            .navbar { padding: 1em 0 1em 0; }
+        }
     </style>
 </head>
 <body>
-<div class="navbar">
-    <button id="homeBtn" disabled>Home</button>
-    <button id="announcementsBtn" disabled>Announcements</button>
-    <button id="settingsBtn" disabled>Settings</button>
-</div>
-<div class="container">
-    <div class="reset-box">
-        <h2>Reset Your Password</h2>
-        <div class="user-area" id="userArea">Loading...</div>
-        <div class="input-area">
-            <input type="password" id="password" placeholder="Enter new password">
-        </div>
+    <div class="navbar">
+        <button class="navbar-btn" id="homeBtn" disabled>Home</button>
+        <button class="navbar-btn" id="announcementsBtn" disabled>Announcements</button>
+        <button class="navbar-btn" id="settingsBtn" disabled>Settings</button>
+    </div>
+    <div class="reset-card">
+        <div class="reset-title">Reset Your Password</div>
+        <div class="reset-user" id="userArea">Loading...</div>
+        <input class="reset-input" type="password" id="password" placeholder="Enter new password">
         <button class="reset-btn" id="resetBtn">Reset Password</button>
         <div class="msg" id="msg"></div>
     </div>
-</div>
-<script>
-let username = ""
-const token = new URLSearchParams(window.location.search).get('token')
-const userArea = document.getElementById('userArea')
-const msg = document.getElementById('msg')
-const resetBtn = document.getElementById('resetBtn')
-const navBtns = [document.getElementById('homeBtn'), document.getElementById('announcementsBtn'), document.getElementById('settingsBtn')]
-let resetDone = false
-async function fetchUsername() {
-    try {
-        const r = await fetch('/api/get-username-from-token?token=' + encodeURIComponent(token))
-        const data = await r.json()
-        if (data.username) {
-            username = data.username
-            userArea.innerHTML = `<b>${username}</b>, reset your password ${username}, to continue on the website.`
-        } else {
-            userArea.innerHTML = "Invalid or expired reset link."
-            resetBtn.disabled = true
-        }
-    } catch {
-        userArea.innerHTML = "Error loading user."
-        resetBtn.disabled = true
-    }
-}
-fetchUsername()
-resetBtn.onclick = async () => {
-    msg.innerText = ''
-    const password = document.getElementById('password').value
-    if (!password) {
-        msg.innerText = 'Enter a new password.'
-        return
-    }
-    resetBtn.disabled = true
-    try {
-        const r = await fetch('/api/reset-password', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token, password })
-        })
-        const data = await r.json()
-        if (r.ok) {
-            msg.innerText = 'Password was reset. You can now use the navigation buttons.'
-            resetDone = true
-            navBtns.forEach(btn => btn.disabled = false)
-        } else {
-            msg.innerText = data.error || 'Failed to reset password.'
-        }
-    } catch {
-        msg.innerText = 'Server error.'
-    }
-    if (!resetDone) resetBtn.disabled = false
-}
-navBtns.forEach(btn => {
-    btn.onclick = () => {
-        if (!resetDone) {
-            if (window.confirm('You must reset your password first')) {
-                document.getElementById('password').focus()
+    <script>
+        let username = ""
+        const token = new URLSearchParams(window.location.search).get('token')
+        const userArea = document.getElementById('userArea')
+        const msg = document.getElementById('msg')
+        const resetBtn = document.getElementById('resetBtn')
+        const navBtns = [document.getElementById('homeBtn'), document.getElementById('announcementsBtn'), document.getElementById('settingsBtn')]
+        let resetDone = false
+        async function fetchUsername() {
+            try {
+                const r = await fetch('/api/get-username-from-token?token=' + encodeURIComponent(token))
+                const data = await r.json()
+                if (data.username) {
+                    username = data.username
+                    userArea.innerHTML = `<b>${username}</b>, reset your password ${username}, to continue on the website.`
+                } else {
+                    userArea.innerHTML = "Invalid or expired reset link."
+                    resetBtn.disabled = true
+                }
+            } catch {
+                userArea.innerHTML = "Error loading user."
+                resetBtn.disabled = true
             }
-            return
         }
-        if (btn.id === 'homeBtn') location.href = 'index.html'
-        if (btn.id === 'announcementsBtn') location.href = 'announcements.html'
-        if (btn.id === 'settingsBtn') location.href = 'settings.html'
-    }
-})
-</script>
+        fetchUsername()
+        resetBtn.onclick = async () => {
+            msg.innerText = ''
+            const password = document.getElementById('password').value
+            if (!password) {
+                msg.innerText = 'Enter a new password.'
+                return
+            }
+            resetBtn.disabled = true
+            try {
+                const r = await fetch('/api/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, password })
+                })
+                const data = await r.json()
+                if (r.ok) {
+                    msg.innerText = 'Password was reset. You can now use the navigation buttons.'
+                    resetDone = true
+                    navBtns.forEach(btn => btn.disabled = false)
+                } else {
+                    msg.innerText = data.error || 'Failed to reset password.'
+                }
+            } catch {
+                msg.innerText = 'Server error.'
+            }
+            if (!resetDone) resetBtn.disabled = false
+        }
+        navBtns.forEach(btn => {
+            btn.onclick = () => {
+                if (!resetDone) {
+                    if (window.confirm('You must reset your password first')) {
+                        document.getElementById('password').focus()
+                    }
+                    return
+                }
+                if (btn.id === 'homeBtn') location.href = 'index.html'
+                if (btn.id === 'announcementsBtn') location.href = 'announcements.html'
+                if (btn.id === 'settingsBtn') location.href = 'settings.html'
+            }
+        })
+    </script>
 </body>
 </html>
