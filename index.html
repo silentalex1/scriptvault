@@ -94,60 +94,9 @@
                         <input type="password" id="loginPassword" class="input-md">
                     </div>
                     <button class="form-btn" type="button" id="loginBtn">Login</button>
-                    <button type="button" id="forgotBtn" style="margin-top:1em;width:100%;background:#3b5bff;color:#fff;border:none;padding:0.7em;border-radius:4px;cursor:pointer;">Forgot Password?</button>
                 </form>
             </div>
         </div>
     </div>
-    <div id="forgotModal" style="display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;z-index: 9999;">
-        <div style="background:#232848;padding:2em 2em 1.5em 2em;border-radius:12px;max-width:340px;width:95%;">
-            <h3 style="color:#fff;margin-bottom:0.7em;">Forgot Password</h3>
-            <input id="forgotEmail" type="email" placeholder="Your email" style="width:100%;padding:0.7em;margin-top:1em;background:#16182a;color:#fff;border:2px solid #393b5b;border-radius:4px;">
-            <div id="forgotMsg" style="margin-top:1em;min-height:1.2em;font-size:0.98em;color:#fff;"></div>
-            <button id="forgotSend" style="width:100%;margin-top:1em;background:linear-gradient(90deg,#3b5bff 0,#bc48ff 100%);color:#fff;border:none;padding:0.8em;border-radius:4px;cursor:pointer;font-weight:bold;">Send Reset Email</button>
-            <button id="forgotCancel" style="width:100%;margin-top:0.7em;background:#22263a;color:#fff;border:none;padding:0.7em;border-radius:4px;cursor:pointer;">Cancel</button>
-        </div>
-    </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const forgotBtn = document.getElementById('forgotBtn')
-            const forgotModal = document.getElementById('forgotModal')
-            const forgotSend = document.getElementById('forgotSend')
-            const forgotCancel = document.getElementById('forgotCancel')
-            const forgotMsg = document.getElementById('forgotMsg')
-            forgotBtn.onclick = () => { forgotModal.style.display = 'flex'; forgotMsg.innerText = ""; }
-            forgotCancel.onclick = () => { forgotModal.style.display = 'none'; }
-            forgotSend.onclick = async () => {
-                const email = document.getElementById('forgotEmail').value
-                forgotMsg.innerText = ""
-                if (!email) { forgotMsg.innerText = "Enter your account email."; return }
-                forgotSend.disabled = true
-                try {
-                    const r = await fetch('/api/request-password-reset', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email })
-                    })
-                    const data = await r.json()
-                    if (r.ok) {
-                        forgotMsg.innerText = "Password reset requested. Click the link below to reset your password."
-                        if (data.link) {
-                            const a = document.createElement('a')
-                            a.href = data.link
-                            a.innerText = "Reset Password Link"
-                            a.style.display = "block"
-                            a.style.color = "#bc48ff"
-                            a.style.marginTop = "0.6em"
-                            forgotMsg.appendChild(a)
-                        }
-                    } else {
-                        forgotMsg.innerText = data.error || "Failed to process reset."
-                    }
-                } catch { forgotMsg.innerText = "Server error." }
-                forgotSend.disabled = false
-            }
-        })
-    </script>
 </body>
 </html>
-
