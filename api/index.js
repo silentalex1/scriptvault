@@ -1,25 +1,31 @@
 const express = require('express')
 const serverless = require('serverless-http')
+const crypto = require('crypto')
 const app = express()
 app.use(express.json())
 let scripts = []
 let announcements = []
 let users = []
 const ownerUsername = 'realalex'
-const ownerPassword = 'realalexpass'
+const ownerPassHash = process.env.REALALEX_PASS_HASH || ''
+function hashPassword(password) {
+    return crypto.createHash('sha256').update(password).digest('hex')
+}
 function ensureOwnerUser() {
     if (!users.some(u => u.username === ownerUsername)) {
-        const token = Math.random().toString(36).slice(2) + Date.now()
-        users.push({ id: Date.now(), username: ownerUsername, password: ownerPassword, token })
+        users.push({ id: Date.now(), username: ownerUsername, passHash: ownerPassHash, token: genToken() })
     }
 }
-ensureOwnerUser()
+function genToken() {
+    return crypto.randomBytes(24).toString('hex')
+}
 function getUserByToken(token) {
     return users.find(u => u.token === token)
 }
 function isOwner(user) {
     return user && user.username && user.username.toLowerCase() === ownerUsername
 }
+ensureOwnerUser()
 app.get('/api/scripts', (req, res) => {
     const token = req.headers['x-auth']
     const user = getUserByToken(token)
@@ -127,24 +133,30 @@ app.post('/api/users', (req, res) => {
     if (users.some(user => user.username.toLowerCase() === username.toLowerCase())) {
         return res.status(400).json({ error: 'Username already exists' })
     }
-    const token = Math.random().toString(36).slice(2) + Date.now()
-    const user = { id: Date.now(), username, password, token }
+    const passHash = hashPassword(password)
+    const token = genToken()
+    const user = { id: Date.now(), username, passHash, token }
     users.push(user)
     res.status(201).json({ message: 'User created successfully', token })
 })
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body
     ensureOwnerUser()
-    if (username === ownerUsername && password === ownerPassword) {
+    if (username === ownerUsername) {
         const user = users.find(u => u.username === ownerUsername)
-        if (!user.token) user.token = Math.random().toString(36).slice(2) + Date.now()
-        return res.status(200).json({ message: 'Login successful', token: user.token })
+        if (!user) return res.status(403).json({ error: 'Owner account missing' })
+        if (user.passHash === hashPassword(password)) {
+            if (!user.token) user.token = genToken()
+            return res.status(200).json({ message: 'Login successful', token: user.token })
+        } else {
+            return res.status(403).json({ error: 'Invalid credentials' })
+        }
     }
-    const user = users.find(u => u.username === username && u.password === password)
-    if (!user) {
-        return res.status(200).json({ message: 'Logged in as guest', token: 'guest-token' })
+    const user = users.find(u => u.username === username)
+    if (!user || user.passHash !== hashPassword(password)) {
+        return res.status(403).json({ error: 'Invalid credentials' })
     }
-    if (!user.token) user.token = Math.random().toString(36).slice(2) + Date.now()
+    if (!user.token) user.token = genToken()
     res.status(200).json({ message: 'Login successful', token: user.token })
 })
 module.exports = app
