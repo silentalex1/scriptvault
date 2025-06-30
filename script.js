@@ -9,14 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const accountBtn = document.getElementById('accountBtn') || document.getElementById('createAccountBtn');
     const accountModal = document.getElementById('accountModal');
     const closeAccount = document.getElementById('closeAccount');
-    const saveAccount = document.getElementById('saveAccount');
     const welcomeUser = document.getElementById('welcomeUser');
-    const authTabs = document.getElementById('authTabs');
-    const showCreate = document.getElementById('showCreate');
-    const showLogin = document.getElementById('showLogin');
-    const createForm = document.getElementById('createForm');
-    const loginForm = document.getElementById('loginForm');
-    const loginBtn = document.getElementById('loginBtn');
     const addAnnouncementBtn = document.getElementById('addAnnouncementBtn');
     const addAnnouncementModal = document.getElementById('addAnnouncementModal');
     const closeAddAnnouncement = document.getElementById('closeAddAnnouncement');
@@ -26,6 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const announceList = document.getElementById('announceList');
     const scriptSubmitBtn = document.getElementById('scriptSubmitBtn');
     const scriptCancelEditBtn = document.getElementById('scriptCancelEditBtn');
+    const discordLogin = document.getElementById('discordLogin');
+    const githubLogin = document.getElementById('githubLogin');
     let editingScriptId = null;
 
     function setSession(username, token) {
@@ -123,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!session.username || !session.token) {
             accountModal.classList.remove('hidden');
             document.body.classList.add('modal-open');
-            updateAuthTab('login');
             return;
         }
         const title = document.getElementById('scriptTitle').value.trim();
@@ -175,85 +169,16 @@ document.addEventListener('DOMContentLoaded', () => {
     accountBtn && accountBtn.addEventListener('click', () => {
         accountModal.classList.remove('hidden');
         document.body.classList.add('modal-open');
-        updateAuthTab('login');
     });
     closeAccount && closeAccount.addEventListener('click', () => {
         accountModal.classList.add('hidden');
         document.body.classList.remove('modal-open');
     });
-    function updateAuthTab(tab = 'create') {
-        if (tab === 'create') {
-            showCreate.classList.add('active');
-            showLogin.classList.remove('active');
-            createForm.classList.remove('hidden');
-            loginForm.classList.add('hidden');
-        } else {
-            showCreate.classList.remove('active');
-            showLogin.classList.add('active');
-            createForm.classList.add('hidden');
-            loginForm.classList.remove('hidden');
-        }
-    }
-    showCreate && showCreate.addEventListener('click', () => updateAuthTab('create'));
-    showLogin && showLogin.addEventListener('click', () => updateAuthTab('login'));
-    saveAccount && saveAccount.addEventListener('click', async () => {
-        const username = document.getElementById('newUsername').value.trim();
-        const password = document.getElementById('newPassword').value.trim();
-        const email = document.getElementById('newEmail').value.trim();
-        if (!username || !password || !email) {
-            showToast('Please fill in username, email, and password.');
-            return;
-        }
-        try {
-            const response = await fetch('/api/users', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password, email })
-            });
-            const data = await response.json();
-            if (!response.ok) {
-                showToast(data.error || 'Failed to create account.', 'error');
-                return;
-            }
-            setSession(username, data.token);
-            updateWelcome();
-            showToast('Account created!', 'success');
-            updateAuthTab('login');
-            accountModal.classList.add('hidden');
-            document.body.classList.remove('modal-open');
-            loadScripts();
-        } catch {
-            showToast('Failed to create account. Please try again.', 'error');
-        }
+    discordLogin && discordLogin.addEventListener('click', () => {
+        window.location.href = '/api/oauth/discord';
     });
-    loginBtn && loginBtn.addEventListener('click', async () => {
-        const username = document.getElementById('loginUsername').value.trim();
-        const password = document.getElementById('loginPassword').value.trim();
-        if (!username || !password) {
-            showToast('Please fill in your username and password.');
-            return;
-        }
-        try {
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await response.json();
-            if (!response.ok) {
-                showToast(data.error || 'Failed to login.', 'error');
-                return;
-            }
-            setSession(username, data.token);
-            updateWelcome();
-            accountModal.classList.add('hidden');
-            document.body.classList.remove('modal-open');
-            showToast('Logged in!', 'success');
-            showAddAnnouncementBtn();
-            loadScripts();
-        } catch {
-            showToast('Failed to login. Please try again.', 'error');
-        }
+    githubLogin && githubLogin.addEventListener('click', () => {
+        window.location.href = '/api/oauth/github';
     });
     function setTheme(theme) {
         if (theme === 'light') {
@@ -275,12 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function showAddAnnouncementBtn() {
         if (!addAnnouncementBtn) return;
-        const session = getSession();
-        if (session.username && session.username.toLowerCase() === 'realalex') {
-            addAnnouncementBtn.classList.remove('hidden');
-        } else {
-            addAnnouncementBtn.classList.add('hidden');
-        }
+        addAnnouncementBtn.classList.add('hidden');
     }
     function showToast(msg, type = 'info') {
         let toast = document.createElement('div');
@@ -330,30 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (postAnnouncementBtn) {
         postAnnouncementBtn.addEventListener('click', async () => {
-            const title = announcementTitle.value.trim();
-            const desc = announcementDesc.value.trim();
-            const session = getSession();
-            if (!title || !desc) {
-                showToast('Fill in title and announcement.', 'error');
-                return;
-            }
-            if (!session.username || session.username.toLowerCase() !== 'realalex') {
-                showToast('Only the owner can post.', 'error');
-                return;
-            }
-            try {
-                const response = await fetch('/api/announcements', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-auth': session.token },
-                    body: JSON.stringify({ title, description: desc })
-                });
-                if (!response.ok) throw new Error();
-                loadAnnouncements();
-                addAnnouncementModal.classList.add('hidden');
-                showToast('Announcement posted!', 'success');
-            } catch {
-                showToast('Failed to post announcement.', 'error');
-            }
+            showToast('No owner is set to post announcements.', 'error');
         });
     }
     async function loadAnnouncements() {
