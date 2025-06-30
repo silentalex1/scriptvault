@@ -9,8 +9,8 @@ let announcements = []
 let users = []
 let resetRequests = []
 const ownerUsername = 'realalex'
-const ownerEmail = process.env.REALALEX_EMAIL || ''
 const ownerPassHash = process.env.REALALEX_PASS_HASH || ''
+const ownerEmail = process.env.REALALEX_EMAIL || ''
 const smtpUser = process.env.SMTP_USER || ''
 const smtpPass = process.env.SMTP_PASS || ''
 const smtpHost = process.env.SMTP_HOST || ''
@@ -44,6 +44,10 @@ function getUser(username) {
 function ensureOwnerUser() {
     if (!users.some(u => u.username === ownerUsername)) {
         users.push({ id: Date.now(), username: ownerUsername, passHash: ownerPassHash, token: genToken(), email: ownerEmail })
+    } else {
+        const owner = users.find(u => u.username === ownerUsername)
+        if (owner && ownerEmail && owner.email !== ownerEmail) owner.email = ownerEmail
+        if (owner && ownerPassHash && owner.passHash !== ownerPassHash) owner.passHash = ownerPassHash
     }
 }
 ensureOwnerUser()
@@ -182,6 +186,7 @@ app.post('/api/login', (req, res) => {
 app.post('/api/request-password-reset', async (req, res) => {
     const { email } = req.body
     if (!email) return res.status(400).json({ error: 'Email is required' })
+    ensureOwnerUser()
     const user = getUserByEmail(email)
     if (!user) return res.status(404).json({ error: 'No account with that email' })
     const resetToken = genToken()
@@ -190,13 +195,17 @@ app.post('/api/request-password-reset', async (req, res) => {
     resetRequests.push({ userId: user.id, resetToken, expires })
     user.forcePasswordReset = true
     const resetLink = `${siteUrl}/forgotarea.html?token=${resetToken}`
-    await transporter.sendMail({
-        from: smtpUser,
-        to: email,
-        subject: 'Password Reset for ScriptVault',
-        html: `Hello ${user.username},<br>Click the link below to reset your password:<br><a href="${resetLink}">${resetLink}</a><br>This link will expire in 15 minutes.<br>reset your password ${user.username}, to continue on the website.`
-    })
-    res.json({ message: 'Password reset email sent' })
+    try {
+        await transporter.sendMail({
+            from: smtpUser,
+            to: email,
+            subject: 'Password Reset for ScriptVault',
+            html: `Hello ${user.username},<br>Click the link below to reset your password:<br><a href="${resetLink}">${resetLink}</a><br>This link will expire in 15 minutes.<br>reset your password ${user.username}, to continue on the website.`
+        })
+        res.json({ message: 'Password reset email sent' })
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to send email. Check your mail settings.' })
+    }
 })
 app.post('/api/reset-password', (req, res) => {
     const { token, password } = req.body
