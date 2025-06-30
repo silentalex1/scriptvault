@@ -29,6 +29,44 @@ body {
 .squares-bg {
     display: none !important;
 }
+.oauth-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    align-items: center;
+    margin: 1.5rem 0 1.5rem 0;
+}
+.oauth-btn {
+    width: 100%;
+    max-width: 340px;
+    padding: 1.1rem 0;
+    border-radius: 1.1rem;
+    font-size: 1.11rem;
+    font-weight: 800;
+    cursor: pointer;
+    border: none;
+    transition: background 0.14s, box-shadow 0.11s, transform 0.11s;
+    margin-bottom: 0.1rem;
+    letter-spacing: 0.02em;
+    box-shadow: var(--shadow2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.oauth-btn.discord {
+    background: linear-gradient(90deg, #5865F2 60%, #5865F2 100%);
+    color: #fff;
+}
+.oauth-btn.discord:hover {
+    background: linear-gradient(90deg, #4752c4 60%, #5865F2 100%);
+}
+.oauth-btn.github {
+    background: linear-gradient(90deg, #18181B 60%, #23272F 100%);
+    color: #fff;
+}
+.oauth-btn.github:hover {
+    background: linear-gradient(90deg, #23272F 60%, #18181B 100%);
+}
 .navbar {
     width: 92vw;
     max-width: 1260px;
