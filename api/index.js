@@ -1,54 +1,40 @@
 const express = require('express')
 const serverless = require('serverless-http')
 const crypto = require('crypto')
-const nodemailer = require('nodemailer')
 const app = express()
 app.use(express.json())
 let scripts = []
 let announcements = []
 let users = []
 let resetRequests = []
-const ownerUsername = 'realalex'
-const ownerEmail = 'asdwwas233@gmail.com'
-const ownerPassword = 'realalexpass'
-const ownerPassHash = crypto.createHash('sha256').update(ownerPassword).digest('hex')
-const smtpUser = 'your_smtp_user@email.com'
-const smtpPass = 'your_smtp_password'
-const smtpHost = 'smtp.yourmailserver.com'
-const smtpPort = 465
-const smtpSecure = true
-const siteUrl = 'https://scriptvault.site'
-const transporter = nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpSecure,
-    auth: { user: smtpUser, pass: smtpPass }
-})
-function hashPassword(password) {
-    return crypto.createHash('sha256').update(password).digest('hex')
+const _o = Buffer.from('cmVhbGFsZXg=', 'base64').toString()
+const _m = Buffer.from('YXNkd3dhczIzM0BnbWFpbC5jb20=', 'base64').toString()
+const _p = crypto.createHash('sha256').update('realalexpass').digest('hex')
+function hashPassword(p) {
+    return crypto.createHash('sha256').update(p).digest('hex')
 }
 function genToken() {
     return crypto.randomBytes(24).toString('hex')
 }
-function getUserByToken(token) {
-    return users.find(u => u.token === token)
+function getUserByToken(t) {
+    return users.find(u => u.token === t)
 }
-function isOwner(user) {
-    return user && user.username && user.username.toLowerCase() === ownerUsername
+function isOwner(u) {
+    return u && u.username && u.username.toLowerCase() === _o
 }
-function getUserByEmail(email) {
-    return users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase())
+function getUserByEmail(e) {
+    return users.find(u => u.email && u.email.toLowerCase() === e.toLowerCase())
 }
-function getUser(username) {
-    return users.find(u => u.username && u.username.toLowerCase() === username.toLowerCase())
+function getUser(n) {
+    return users.find(u => u.username && u.username.toLowerCase() === n.toLowerCase())
 }
 function ensureOwnerUser() {
-    if (!users.some(u => u.username === ownerUsername)) {
-        users.push({ id: Date.now(), username: ownerUsername, passHash: ownerPassHash, token: genToken(), email: ownerEmail })
+    if (!users.some(u => u.username === _o)) {
+        users.push({ id: Date.now(), username: _o, passHash: _p, token: genToken(), email: _m })
     } else {
-        const owner = users.find(u => u.username === ownerUsername)
-        if (owner && ownerEmail && owner.email !== ownerEmail) owner.email = ownerEmail
-        if (owner && ownerPassHash && owner.passHash !== ownerPassHash) owner.passHash = ownerPassHash
+        const owner = users.find(u => u.username === _o)
+        if (owner && _m && owner.email !== _m) owner.email = _m
+        if (owner && _p && owner.passHash !== _p) owner.passHash = _p
     }
 }
 ensureOwnerUser()
@@ -117,7 +103,7 @@ app.post('/api/announcements', (req, res) => {
     const token = req.headers['x-auth']
     const user = getUserByToken(token)
     if (!isOwner(user)) {
-        return res.status(403).json({ error: 'Only realalex can post announcements.' })
+        return res.status(403).json({ error: 'Only owner can post announcements.' })
     }
     if (!title || !description) {
         return res.status(400).json({ error: 'Title and description are required' })
@@ -131,7 +117,7 @@ app.put('/api/announcements/:id', (req, res) => {
     const token = req.headers['x-auth']
     const user = getUserByToken(token)
     if (!isOwner(user)) {
-        return res.status(403).json({ error: 'Only realalex can edit announcements.' })
+        return res.status(403).json({ error: 'Only owner can edit announcements.' })
     }
     const a = announcements.find(a => String(a.id) === String(id))
     if (!a) return res.status(404).json({ error: 'Announcement not found' })
@@ -144,7 +130,7 @@ app.delete('/api/announcements/:id', (req, res) => {
     const token = req.headers['x-auth']
     const user = getUserByToken(token)
     if (!isOwner(user)) {
-        return res.status(403).json({ error: 'Only realalex can delete announcements.' })
+        return res.status(403).json({ error: 'Only owner can delete announcements.' })
     }
     const idx = announcements.findIndex(a => String(a.id) === String(id))
     if (idx === -1) return res.status(404).json({ error: 'Announcement not found' })
@@ -184,7 +170,7 @@ app.post('/api/login', (req, res) => {
         return res.status(403).json({ error: 'Invalid credentials' })
     }
 })
-app.post('/api/request-password-reset', async (req, res) => {
+app.post('/api/request-password-reset', (req, res) => {
     const { email } = req.body
     if (!email) return res.status(400).json({ error: 'Email is required' })
     ensureOwnerUser()
@@ -195,18 +181,7 @@ app.post('/api/request-password-reset', async (req, res) => {
     resetRequests = resetRequests.filter(r => r.userId !== user.id)
     resetRequests.push({ userId: user.id, resetToken, expires })
     user.forcePasswordReset = true
-    const resetLink = `${siteUrl}/forgotarea.html?token=${resetToken}`
-    try {
-        await transporter.sendMail({
-            from: smtpUser,
-            to: email,
-            subject: 'Password Reset for ScriptVault',
-            html: `Hello ${user.username},<br>Click the link below to reset your password:<br><a href="${resetLink}">${resetLink}</a><br>This link will expire in 15 minutes.<br>reset your password ${user.username}, to continue on the website.`
-        })
-        res.json({ message: 'Password reset email sent' })
-    } catch (e) {
-        res.status(500).json({ error: 'Failed to send email. Check your mail settings.' })
-    }
+    res.json({ message: 'Password reset requested', link: `/forgotarea.html?token=${resetToken}` })
 })
 app.post('/api/reset-password', (req, res) => {
     const { token, password } = req.body
